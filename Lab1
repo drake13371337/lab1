@@ -1,0 +1,449 @@
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+const string nums ="0123456789.,";
+const string letters = "abcdefghigklmnopqrstuvwxyz";
+const string title_letters = "ABCDEFGHIGKLMNOPQRSTUVWXYZ";
+const string ops = "+-*/";
+const string brack = "()";
+const string un_min = "-";
+
+const string pr_1_ops = "(";
+const string pr_2_ops = "+-";
+const string pr_3_ops = "*/";
+
+class queue_cu{
+private:
+    string* queue_line;
+    int queue_size;
+    int it;
+public:
+    queue_cu(int size){
+        queue_line = new string[size];
+        queue_size = size;
+        it = -1;
+    }
+    ~queue_cu(){
+        delete queue_line;
+    }
+    void push(string input){
+        it++;
+        if(it!=queue_size){
+            queue_line[it]=input;
+        }
+    }
+    string pull(){
+        string res;
+        if(it>(-1)){
+            res=queue_line[0];
+            it--;
+            for(int i=0;i<=it;i++){
+                queue_line[i]=queue_line[i+1];
+            }
+        }
+        return res;
+    }
+    int size(){
+        return it+1;
+    }
+    friend ostream & operator<<(ostream & out, const queue_cu& n){
+        out<<"[";
+        for(int i=0;i<=n.it;i++){
+            out<<n.queue_line[i]<<" ";
+        }
+        out<<"]";
+        return out;
+    }
+};
+
+class stack_cu{
+private:
+    string* stack_line;
+    int stack_size;
+    int it;
+public:
+    stack_cu(int size){
+        stack_line = new string[size];
+        stack_size = size;
+        it = -1;
+    }
+    ~stack_cu(){
+        delete stack_line;
+    }
+    void push(string input){
+        it++;
+        if(it!=stack_size){
+            stack_line[it]=input;
+        }
+    }
+    string pull(){
+        string res;
+        res=stack_line[it];
+        stack_line[it].clear();
+        it--;
+        return res;
+    }
+    string show(int iter){
+        return stack_line[iter];
+    }
+    int size(){
+        return it+1;
+    }
+    friend ostream & operator<<(ostream & out, const stack_cu& n){
+        out<<"[";
+        for(int i=0;i<=n.it;i++){
+            out<<n.stack_line[i]<<" ";
+        }
+        out<<"]";
+        return out;
+    }
+};
+
+void space_del(string &line){
+    string buff = line;
+    int space_count=0;
+    while(1){
+        int it = line.find_first_of(" ");
+        if(it==(-1)) break;
+        else space_count++;
+        for(int i=it; i<line.size();i++){
+            line[i]=buff[i+1];
+        }
+        buff=line;
+    }
+    line.resize(buff.size()-space_count);
+}
+
+int ops_priority(string op1, string op2){
+    int op1c, op2c;
+
+    if(pr_1_ops.find(op1)!=-1) op1c=1;
+    if(pr_2_ops.find(op1)!=-1) op1c=2;
+    if(pr_3_ops.find(op1)!=-1) op1c=3;
+
+    if(pr_1_ops.find(op2)!=-1) op2c=1;
+    if(pr_2_ops.find(op2)!=-1) op2c=2;
+    if(pr_3_ops.find(op2)!=-1) op2c=3;
+
+    if(op1c>op2c) return 1;
+    if(op1c<op2c) return -1;
+
+    return 0;
+}
+
+
+int main(int argv, char** argc)
+{
+    string input;
+    if(argv>1){
+        for(int i=1;i<argv;i++){
+            input=input+" "+argc[i];
+        }
+    }else getline(cin, input);
+
+    //ABC Catcher Start
+    int abc_it;
+    int abc_flag = 0;
+    int eq_count = 0;
+
+    abc_it = input.find("=");
+    for(int i=0;i<input.size();i++){
+        if(input[i]=='=') eq_count++;
+    }
+
+    string abc_num[eq_count];
+    string abc_name[eq_count];
+
+    if(abc_it!=(-1)){
+        for(int i=abc_it;i<input.size();i++){
+            if(input[i]=='='){
+                abc_name[abc_flag]=input[i-1];
+                for(int j = i+1;j<input.size();j++){
+                    if(nums.find(input[j])!=(-1) || input[j]=='-'){
+                        abc_num[abc_flag]=abc_num[abc_flag]+input[j];
+                        i++;
+                    }else j=input.size()*2;
+                }
+                abc_flag++;
+            }
+        }
+
+        input.resize(abc_it-2);
+    }
+    //ABC Catcher End
+
+    space_del(input);
+    string table[input.size()];
+    string output[input.size()];
+    int token_count;
+
+    //Pars start
+    int count = -1;
+    bool flag_num = false;
+    bool flag_let = false;
+    bool flag_tit = false;
+    bool flag_min = false;
+    bool flag_ops = false;
+
+    bool state =  true;
+
+    for(int i=0; i<input.size();i++){
+        if(i==0) count++;
+        if(nums.find(input[i])!=(-1)) flag_num = true;
+        if(letters.find(input[i])!=(-1)) flag_let = true;
+        if(title_letters.find(input[i])!=(-1)) flag_tit = true;
+        if(ops.find(input[i])!=(-1)) flag_ops = true;
+        if(un_min.find(input[i])!=(-1)) flag_min = true;
+        if(brack.find(input[i])!=(-1)){
+            if(i!=0) count++;
+            if(input[i]=='('){
+               output[count]=input[i];
+               table[count]="tbrack";
+               if(i!=0){
+                   if(output[count-1]=="-"){
+                       table[count-1]="un_min";
+                   }
+               }
+            }
+            if(input[i]==')'){
+               output[count]=input[i];
+               table[count]="bbrack";
+            }
+            state =  false;
+        }
+        if(flag_min){
+            if(i==0 && table[count+1]!="("){
+                output[count]=input[i];
+                table[count]="un_min";
+                flag_ops = false;
+            }
+            if(i!=0 && table[count]=="tbrack"){
+                count++;
+                output[count]=input[i];
+                table[count]="un_min";
+                flag_ops = false;
+            }
+            state =  false;
+        }
+        if(flag_ops){
+            count++;
+            output[count]=input[i];
+            table[count]="ops";
+        }
+        if(state){
+            if(flag_num){
+                if(i==0){
+                    output[count]=input[i];
+                    table[count]="num";
+                }
+                if(i!=0 && table[count]=="num")
+                    output[count]=output[count]+input[i];
+                if(i!=0 && table[count]=="un_min"){
+                    output[count]=output[count]+input[i];
+                    table[count]="num";
+                }
+                if(i!=0 && table[count]!="un_min" && table[count]!="num"){
+                    count++;
+                    output[count]=input[i];
+                    table[count]="num";
+                }
+            }
+            if(flag_let || flag_tit){
+                if(i==0){
+                    output[count]=input[i];
+                    table[count]="abc";
+                }
+                if(i!=0 && table[count]=="abc")
+                    output[count]+=input[i];
+                if(i!=0 && table[count]!="abc"){
+                    count++;
+                    output[count]=input[i];
+                    table[count]="abc";
+                }
+            }
+        }
+        flag_num = false;
+        flag_let = false;
+        flag_tit = false;
+        flag_min = false;
+        flag_ops = false;
+        state =  true;
+    }
+    token_count=count+1;
+    ////Pars Res Start
+/*  cout<<"Token count: "<<token_count<<endl;
+    for(int i=0; i<=count;i++){
+        cout<<"T: "<<table[i]<<"  O: "<<output[i]<<endl;
+    }
+*/  ////Pars Res End
+    //Pars End
+    //Un Min Replace Start
+    int um_count = 0;
+    int un_flag = 0;
+    for(int i = 0; i<token_count;i++){
+        if(table[i]=="un_min") um_count++;
+    }
+    token_count=token_count+um_count*4;
+    string ctable[token_count];
+    string coutput[token_count];
+
+    for(int i=0; i<(token_count-um_count*4);i++){
+        if(table[i]=="un_min"){
+            if(i!=0 && table[i-1]!="tbrack"){
+                ctable[un_flag]="ops";
+                coutput[un_flag]="+";
+                un_flag++;
+            }
+            ctable[un_flag]="tbrack";
+            coutput[un_flag]="(";
+            un_flag++;
+            ctable[un_flag]="num";
+            coutput[un_flag]="-1";
+            un_flag++;
+            ctable[un_flag]="bbrack";
+            coutput[un_flag]=")";
+            un_flag++;
+            ctable[un_flag]="ops";
+            coutput[un_flag]="*";
+        }else{
+            ctable[un_flag]=table[i];
+            coutput[un_flag]=output[i];
+        }
+        un_flag++;
+    }
+    ////Un Min Res Start
+/*  cout<<"New Token count: "<<token_count<<endl;
+    for(int i=0; i<=token_count-1;i++){
+        cout<<coutput[i];
+    }
+    cout<<endl;
+    for(int i=0; i<=token_count-1;i++){
+        cout<<"T: "<<ctable[i]<<"  O: "<<coutput[i]<<endl;
+    }
+*/  ////Un Min Res End
+    //Un Min Replace End
+    //ABC To Nums Start
+    if(eq_count>0){
+        for(int i=0; i<token_count;i++){
+            if(ctable[i]=="abc"){
+                for(int j=0;j<eq_count;j++){
+                    if(coutput[i]==abc_name[j]){
+                        ctable[i]="num";
+                        coutput[i]=abc_num[j];
+                    }
+                }
+            }
+        }
+    }
+    //ABC To Nums End
+    //OPZ Start
+    bool opz_flag = true;
+    int i_buff;
+    string opz_buff;
+    int opz_const_a;
+    queue_cu q1(input.size()+um_count*4);
+    stack_cu s1(input.size()+um_count*4);
+    ////OPZ Main Part Start
+    for(int i=0;i<token_count;i++){
+        if(ctable[i]=="num" || ctable[i]=="abc") q1.push(coutput[i]);
+        if(ctable[i]=="ops"){
+            opz_flag = true;
+            if(s1.size()!=0){
+                opz_buff = s1.pull();
+                s1.push(opz_buff);
+                i_buff = ops_priority(opz_buff, coutput[i]);
+            }
+            if(s1.size()==0 || i_buff!=(1)){
+                s1.push(coutput[i]);
+            }else{
+                opz_const_a = s1.size();
+                for(int j=0; j<opz_const_a;j++){
+                    if(j!=opz_const_a){
+                        opz_buff = s1.pull();
+                        s1.push(opz_buff);
+                        i_buff = ops_priority(coutput[i], opz_buff);
+                    }
+                   if(i_buff!=(-1)){
+                        s1.push(coutput[i]);
+                        j=opz_const_a*2;
+                    }else{
+                        opz_buff = s1.pull();
+                        q1.push(opz_buff);
+                    }
+                    if(s1.size()==0){
+                        s1.push(coutput[i]);
+                        j=opz_const_a*2;
+                    }
+                }
+            }
+        }
+        if(ctable[i]=="tbrack") s1.push(coutput[i]);
+        if(ctable[i]=="bbrack"){
+            opz_const_a = s1.size();
+            for(int i=0; i<opz_const_a ;i++){
+                opz_buff = s1.pull();
+                if(opz_buff=="("){
+                    i=opz_const_a*2;
+                }else{
+                    q1.push(opz_buff);
+                }
+            }
+        }
+    }
+    opz_const_a = s1.size();
+    for(int g=0;g<opz_const_a;g++){
+        opz_buff = s1.pull();
+        q1.push(opz_buff);
+    }
+    ////OPZ Main Part End
+    //OPZ End
+    //Stack Machine Calculating Start
+    stack_cu smc_s(q1.size());
+    string global_res, nums_1, nums_2, smc_buff, nums_3;
+    double num_1, num_2, num_3;
+    int smc_flag;
+
+    for(int i=0;i<2;i){
+        smc_flag=q1.size();
+        if(smc_flag==0){
+            global_res=smc_s.show(0);
+            i=i+2;
+        }else{
+            smc_buff=q1.pull();
+            if(ops.find(smc_buff)==(-1)) smc_s.push(smc_buff);
+            if(ops.find(smc_buff)!=(-1)){
+                nums_1 = smc_s.pull();
+                nums_2 = smc_s.pull();
+                num_1 = stod(nums_1);
+                num_2 = stod(nums_2);
+                if(smc_buff=="+"){
+                    num_3=num_1+num_2;
+                    nums_3=to_string(num_3);
+                    smc_s.push(nums_3);
+                }
+                if(smc_buff=="-"){
+                    num_3=num_1-num_2;
+                    nums_3=to_string(num_3);
+                    smc_s.push(nums_3);
+                }
+                if(smc_buff=="*"){
+                    num_3=num_1*num_2;
+                    nums_3=to_string(num_3);
+                    smc_s.push(nums_3);
+                }
+                if(smc_buff=="/"){
+                    num_3=num_1/num_2;
+                    nums_3=to_string(num_3);
+                    smc_s.push(nums_3);
+                }
+            }
+        }
+    }
+    ////Stack Machine Calculating Res Start
+    cout<<input<<" = "<<global_res<<endl;
+    ////Stack Machine Calculating Res End
+    //Stack Machine Calculating End
+    return 0;
+}
