@@ -225,9 +225,10 @@ class Graph{
 };
 
 
-int main(){
-    Graph A("test.txt");
-    string res = A.alg_dijkstra(1, 3);
+int main(int argv, char **argc){
+    Graph A(argc[1]);
+    string res = A.alg_dijkstra(atoi(argc[2]), atoi(argc[3]));
     cout<<res<<endl;
     return 0;
 }
+
