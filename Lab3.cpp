@@ -8,8 +8,8 @@ using namespace std;
 class Graph{
   private:
     int n;
-    int** graph_matr;
-    list<pair<int,int>>* graph_list;
+    double** graph_matr;
+    list<pair<int,double>>* graph_list;
     string mode;
     string filename;
 
@@ -21,8 +21,9 @@ class Graph{
         bool trigger = false;
         bool trigger1 = false;
         string buff, vert, weight;
-        int vi, wi;
-        pair<int,int> buff_pair;
+        int vi;
+        double wi;
+        pair<int,double> buff_pair;
 
         ifstream file(filename, ios_base::in);
         file.seekg(0, ios_base::beg);
@@ -34,15 +35,15 @@ class Graph{
         buff.clear();
 
         if(mode=="matrix"){
-            graph_matr = new int*[n];
-            for(int i=0;i<n;i++) graph_matr[i] = new int[n];
+            graph_matr = new double*[n];
+            for(int i=0;i<n;i++) graph_matr[i] = new double[n];
 
             for(int i=0;i<n;i++)
                 for(int j=0;j<n;j++)
                     graph_matr[i][j]=0;
         }
         if(mode=="list"){
-           graph_list = new list<pair<int,int>>[n];
+           graph_list = new list<pair<int,double>>[n];
         }
 
         for(int i=0;i<n;i++){
@@ -64,7 +65,7 @@ class Graph{
                     if(buff[j]==')'){
                         trigger1=false;
                         vi=atoi(vert.c_str());
-                        wi=atoi(weight.c_str());
+                        wi=stod(weight);
 
                         if(mode=="matrix")
                             graph_matr[i][vi-1]=wi;
@@ -110,22 +111,21 @@ class Graph{
     }
     string alg_dijkstra(int a, int b){
         string res;
-        int *pointers, *way;
-        bool *inf;
-        bool *active_pointers;
-        int buff, way_it, curr;
+        double *pointers, buff;
+        bool *inf, *active_pointers, bl_buff;
+        int curr, way_it, *way;
         int first = a-1;
         int second = b-1;
         queue<int> q1;
 
-        pointers = new int[n];
+        pointers = new double[n];
         way = new int[n];
         active_pointers = new bool[n];
         inf = new bool[n];
 
         for(int i=0;i<n;i++){
             active_pointers[i]=true;
-            pointers[i]=0;
+            pointers[i]=0.0;
             way[i]=0;
             inf[i]=true;
         }
@@ -173,35 +173,33 @@ class Graph{
         q1.push(second);
         way_it=1;
         way[0]=second+1;
-
         while(!q1.empty()){
             curr=q1.front();
             q1.pop();
+            bl_buff=true;
             if(mode=="matrix"){
                 for(int j=0;j<n;j++){
-                    for(int i=0;i<n;i++){
                         if(graph_matr[j][curr]!=0 && curr!=first){
                             buff=pointers[curr]-graph_matr[j][curr];
                             if(pointers[j]==buff){
                                 q1.push(j);
                                 way[way_it]=j+1;
                                 way_it++;
-                                break;
+                                j=n+1;
                             }
                         }
-                    }
                 }
             }
             if(mode=="list"){
                 for(int j=0;j<n;j++){
                     for(auto iter = graph_list[j].begin(); iter!=graph_list[j].end(); iter++){
-                        if((iter->first-1)==curr && curr!=first){
+                        if((iter->first-1)==curr && curr!=first && bl_buff){
                             buff=pointers[curr]-(iter->second);
                             if(pointers[j]==buff){
                                 q1.push(j);
                                 way[way_it]=j+1;
                                 way_it++;
-                                break;
+                                bl_buff=false;
                             }
                         }
                     }
