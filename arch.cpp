@@ -16,8 +16,8 @@ Arch::Arch(string in_f, string out_f, string m, string pref){
 
 int Arch::read_f(){
     string buff_res, buff1;
-    unsigned char buff;
-    pair<int,unsigned char> buff2;
+    char buff;
+    pair<int,char> buff2;
 
     if(mode=="compress"){
         cout<<"Opening file..."<<endl;
@@ -38,7 +38,7 @@ int Arch::read_f(){
         while(!file.eof()){
             buff=file.get();
             if(statistic.find(buff)==statistic.end()){
-                statistic.insert(pair<unsigned char,int>(buff, 1));
+                statistic.insert(pair<char,int>(buff, 1));
             }else{
                 statistic[buff]++;
             }
@@ -48,7 +48,7 @@ int Arch::read_f(){
             return -1;
         }
         for(auto iter = statistic.begin(); iter!=statistic.end(); iter++)
-            statistic_list.push_back(pair<int,unsigned char>(iter->second, iter->first));
+            statistic_list.push_back(pair<int,char>(iter->second, iter->first));
 
         stat_size=statistic_list.size();
         statistic_list.sort();
@@ -60,7 +60,7 @@ int Arch::read_f(){
         //for(auto iter = statistic_list.begin(); iter!=statistic_list.end(); iter++)
         //   cout<<" Num: "<<iter->first<<" Char: "<<iter->second<<endl;
 
-        cout<<" orig_data_size:"<<orig_data_size<<endl;
+        //  cout<<" orig_data_size:"<<orig_data_size<<endl;
         cout<<"Done..."<<endl;
         return 0;
     }
@@ -121,7 +121,7 @@ int Arch::code_form(){
     pair<int,string> buff2;
     string buff, buff1;
     for(auto iter = statistic_list.begin(); iter!=statistic_list.end(); iter++){
-        code_vec.push_back(pair<string,unsigned char>("",iter->second));
+        code_vec.push_back(pair<string,char>("",iter->second));
         buff.append(1, iter->second);
         code_list.push_back(pair<int, string>(iter->first, buff));
         buff.clear();
@@ -167,19 +167,19 @@ int Arch::code_form(){
     for(int j=0; j<code_vec.size();j++){
         reverse(code_vec[j].first.begin(), code_vec[j].first.end());
     }
-    for(auto iter = code_vec.begin(); iter!=code_vec.end(); iter++)
-       cout<<"Char: "<<iter->second<<" | Code: "<<iter->first<<endl;
-    cout<<"-----"<<endl;
+    //for(auto iter = code_vec.begin(); iter!=code_vec.end(); iter++)
+    //   cout<<"Char: "<<iter->second<<" | Code: "<<iter->first<<endl;
+    //cout<<"-----"<<endl;
 }
 
 int Arch::compress(){
-    unsigned char buff, res;
+    char buff, res;
     string buff1, cur_queue;
     int buff_i = 0;
 
     code_form();
 
-    ofstream file(out_filename, ios_base::out);
+    ofstream file(out_filename, ios_base::out | ios_base::binary);
     ifstream file1(in_filename, ios_base::in);
 
     file<<prefix;
@@ -204,16 +204,16 @@ int Arch::compress(){
         while(cur_queue.length()>8){
             res=bt_char(cur_queue.substr(0, 8));
             file<<res;
-            cout<<"C: "<<bt_char(cur_queue.substr(0, 8))<<" CD: "<<cur_queue.substr(0, 8)<<endl;
+            //cout<<"C: "<<bt_char(cur_queue.substr(0, 8))<<" CD: "<<cur_queue.substr(0, 8)<<endl;
             cur_queue.erase(0, 8);
         }
     }
     if(!cur_queue.empty()){
         buff_i=cur_queue.length()-1;
         for(int i=buff_i; i<8; i++)
-            cur_queue.append("1");
+            cur_queue.append(1, '0');
         file<<bt_char(cur_queue.substr(0, 8));
-        cout<<"C: "<<bt_char(cur_queue.substr(0, 8))<<" CD: "<<cur_queue.substr(0, 8)<<endl;
+        //cout<<"C: "<<bt_char(cur_queue.substr(0, 8))<<" CD: "<<cur_queue.substr(0, 8)<<endl;
         cur_queue.erase(0, 8);
     }
 
@@ -224,21 +224,21 @@ int Arch::compress(){
 
 int Arch::decompress(){
     string buff1, cur_queue;
-    unsigned char buff;
+    char buff;
     int buff_i = 0, count_ch = 0;
 
     code_form();
 
     ofstream file1(out_filename, ios_base::out);
-    ifstream file(in_filename, ios_base::in);
+    ifstream file(in_filename, ios_base::in | ios_base::binary);
 
     for(int i=0;i<stat_size+3;i++) file>>buff1;
     buff1.clear();
     buff=file.get();
 
-    while(!file.eof()){
-        file>>buff;
-        cout<<"C: "<<buff<<" CD: "<<char_bt(buff)<<endl;
+    while(true){
+        buff=file.get();
+        //cout<<"C: "<<buff<<" CD: "<<char_bt(buff)<<endl;
         buff1.append(char_bt(buff));
         buff_i=buff1.length();
         for(int i=0;i<buff_i;i++){
@@ -251,13 +251,14 @@ int Arch::decompress(){
                     cur_queue.clear();
                 }
         }
+        if(count_ch==orig_data_size) break;
     }
 
     file.close();
     file1.close();
 }
 
-string Arch::char_bt(const unsigned char input){
+string Arch::char_bt(const char input){
     string res;
     for(int i=0; i<8;i++){
         res.append(to_string(input>>i&1));
@@ -265,8 +266,8 @@ string Arch::char_bt(const unsigned char input){
     return res;
 }
 
-unsigned char Arch::bt_char(string input){
-    unsigned char res = 'a';
+char Arch::bt_char(string input){
+    char res = 'a';
     for(int i=7; i>=0;i--){
         if(input[i]=='0'){
             res&=~(1<<i);

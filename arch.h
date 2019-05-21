@@ -8,6 +8,7 @@
 #include <map>
 #include <vector>
 #include <algorithm>
+#include <stdio.h>
 
 using namespace std;
 
@@ -21,10 +22,10 @@ private:
     int orig_data_size;
     int stat_size;
 
-    map<unsigned char,int> statistic;
+    map<char,int> statistic;
 
-    list<pair<int,unsigned char>> statistic_list;
-    vector<pair<string,unsigned char>> code_vec;
+    list<pair<int,char>> statistic_list;
+    vector<pair<string,char>> code_vec;
 public:
     Arch();
     Arch(string in_f, string out_f, string m, string pref);
@@ -36,8 +37,8 @@ public:
     int decompress();
     int code_form();
 
-    string char_bt(const unsigned char input);
-    unsigned char bt_char(string input);
+    string char_bt(const char input);
+    char bt_char(string input);
 };
 
 #endif // ARCH_H
