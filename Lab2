@@ -26,7 +26,7 @@ public:
         it = -1;
     }
     ~queue_cu(){
-        delete queue_line;
+        delete[] queue_line;
     }
     void push(string input){
         it++;
@@ -70,7 +70,7 @@ public:
         it = -1;
     }
     ~stack_cu(){
-        delete stack_line;
+        delete[] stack_line;
     }
     void push(string input){
         it++;
